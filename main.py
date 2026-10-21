@@ -14,6 +14,8 @@ def main() -> None:
     mia.add_task(Task("Breakfast", "08:30", "daily", duration_minutes=10, priority="high"))
     mia.add_task(Task("Give medication", "12:00", "daily", duration_minutes=5, priority="high"))
     mia.add_task(Task("Grooming", "15:00", "weekly", duration_minutes=20, priority="low"))
+    # Deliberate clash: same 08:00 slot as Biscuit's morning walk (different pets)
+    mia.add_task(Task("Playtime", "08:00", "once", duration_minutes=15, priority="medium"))
 
     scheduler = Scheduler(owner)
 
@@ -22,11 +24,13 @@ def main() -> None:
     for line in scheduler.explain_plan():
         print(line)
 
-    conflicts = scheduler.find_conflicts()
-    if conflicts:
+    warnings = scheduler.conflict_warnings()
+    if warnings:
         print("\nConflicts:")
-        for a, b in conflicts:
-            print(f"  {a.time}: {a.pet_name} {a.description} vs {b.pet_name} {b.description}")
+        for warning in warnings:
+            print(f"  WARNING: {warning}")
+    else:
+        print("\nNo conflicts.")
 
 
 if __name__ == "__main__":

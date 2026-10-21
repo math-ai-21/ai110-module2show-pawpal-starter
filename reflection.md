@@ -32,7 +32,9 @@ Yes, my design changed during implementation. Based on the AI feedback, I added 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+    - Conflict detection only checks for exact matches (same start time and same due date). It does not check whether task durations overlap, so a 30-minute walk at 08:00 and a feeding at 08:15 are not flagged even though they clash.
 - Why is that tradeoff reasonable for this scenario?
+    - Comparing two "HH:MM" strings is simple and cheap, so the check can run every time a task is added, and it only returns a warning instead of blocking the task. It never raises a false alarm, but it can miss real overlaps. For a small daily pet-care plan that is acceptable, and overlap detection (start < other end and other start < end) is a clear next improvement.
 
 ---
 
