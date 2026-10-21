@@ -1,15 +1,48 @@
 classDiagram
-    %% Replace the placeholders below with your actual classes, attributes, methods, and relationships.
-    %% Keep this file updated so it matches your final implementation.
-
-    class ClassName {
-        +type attribute
-        +method() returnType
+    class Pet {
+        +str name
+        +str species
+        +int age
+        +list~CareTask~ tasks
+        +add_task(task CareTask) void
+        +remove_task(task CareTask) void
     }
 
-    class AnotherClass {
-        +type attribute
-        +method() returnType
+    class CareTask {
+        +str name
+        +str task_type
+        +int duration_minutes
+        +str priority
+        +str frequency
+        +is_due() bool
     }
 
-    ClassName --> AnotherClass : relationship
+    class OwnerPreferences {
+        +int available_minutes
+        +list~str~ preferred_times
+        +dict other_preferences
+        +can_fit(task CareTask, used_minutes int) bool
+    }
+
+    class DailyPlan {
+        +Pet pet
+        +date plan_date
+        +list~CareTask~ scheduled_tasks
+        +dict~str,str~ explanations
+        +int total_minutes
+        +add_entry(task CareTask, reason str) void
+        +summary() str
+    }
+
+    class Planner {
+        +generate_plan(pet Pet, prefs OwnerPreferences, plan_date date) DailyPlan
+        +sort_by_priority(tasks list~CareTask~) list~CareTask~
+        +explain_choice(task CareTask) str
+    }
+
+    Pet "1" o-- "*" CareTask : has
+    Planner ..> Pet : reads tasks from
+    Planner ..> OwnerPreferences : applies constraints
+    Planner --> DailyPlan : creates
+    DailyPlan "1" o-- "*" CareTask : includes
+    DailyPlan --> Pet : belongs to

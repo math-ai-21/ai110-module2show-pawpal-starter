@@ -5,12 +5,20 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
+My intial UML design is to focus on organizing the pet care system into seperate classes where they each have a clear responsibility. 
 - What classes did you include, and what responsibilities did you assign to each?
+I would include these classes:
+   - Pet: Stores information about the pet, such as its name, species, and age.
+   - CareTask: Represents individual care activities, such as walking, feeding, medication, and grooming. It includes each task’s duration, priority, and required frequency.
+   - OwnerPreferences: Stores the owner’s available time, preferred task times, and other scheduling preferences.
+   - DailyPlan: Stores the selected tasks and explanations for why they were included.
+   - Planner: Selects and organizes tasks based on their priority and the owner’s constraints.
 
 **b. Design changes**
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
+Yes, my design changed during implementation. Based on the AI feedback, I added pet and date attributes to the DailyPlan class. The original design stored the tasks but did not specify which pet they were for or which day they should be completed. This change makes that information clear for each unique daily plan.
 
 ---
 
