@@ -41,12 +41,16 @@ Yes, my design changed during implementation. Based on the AI feedback, I added 
 **a. How you used AI**
 
 - How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
+    - I used AI to brainstorm possible test cases, review my class design, and make edits to the code.
 - What kinds of prompts or questions were most helpful?
+    - I think that prompts which described exactly what details I wanted changed were most helpful. I also asked AI to explain what it changed and why so I could understand its suggestions without making huge changes all at once.
 
 **b. Judgment and verification**
 
 - Describe one moment where you did not accept an AI suggestion as-is.
+    - I did not accept AI’s suggestion to create a PlanEntry class to connect each task to a pet because I could identify the pet using a pet_name attribute in the existing Task class, keeping the design simpler.
 - How did you evaluate or verify what the AI suggested?
+    - I checked whether the suggested changes matched the assignment and made logical sense. I ran the demo to check the schedule output and ran tests for marking a task complete and adding a task to a pet.
 
 ---
 
