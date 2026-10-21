@@ -122,3 +122,101 @@ def test_conflict_warning_for_none_when_clear():
     t = Task("Walk", "08:00")
     mochi.add_task(t)
     assert Scheduler(owner).conflict_warning_for(t) is None
+
+
+# --- Sorting correctness -------------------------------------------------
+
+def test_sort_by_time_returns_chronological_order():
+    owner, mochi, rex = _two_pets()
+    mochi.add_task(Task("Evening walk", "18:00"))
+    rex.add_task(Task("Breakfast", "07:30"))
+    mochi.add_task(Task("Lunch", "12:15"))
+    rex.add_task(Task("Midnight snack", "00:05"))
+
+    times = [t.time for t in Scheduler(owner).sort_by_time()]
+
+    assert times == ["00:05", "07:30", "12:15", "18:00"]
+
+
+def test_sort_by_time_keeps_order_for_equal_times_and_does_not_mutate():
+    owner, mochi, _ = _two_pets()
+    first, second, early = Task("A", "08:00"), Task("B", "08:00"), Task("C", "06:00")
+    for task in (first, second, early):
+        mochi.add_task(task)
+
+    result = Scheduler(owner).sort_by_time()
+
+    assert result == [early, first, second]            # stable for ties
+    assert mochi.tasks == [first, second, early]       # original list untouched
+
+
+def test_sort_by_time_handles_empty_list():
+    owner, _, _ = _two_pets()
+    scheduler = Scheduler(owner)
+    assert scheduler.sort_by_time() == []
+    assert scheduler.sort_by_time([]) == []
+
+
+def test_sort_by_priority_orders_high_first_then_time():
+    owner, mochi, _ = _two_pets()
+    low = Task("Low", "06:00", priority="low")
+    high_late = Task("High late", "09:00", priority="high")
+    high_early = Task("High early", "07:00", priority="high")
+    med = Task("Medium", "05:00", priority="medium")
+    for task in (low, high_late, high_early, med):
+        mochi.add_task(task)
+
+    result = Scheduler(owner).sort_by_priority()
+
+    assert result == [high_early, high_late, med, low]
+
+
+def test_unknown_priority_sorts_last():
+    owner, mochi, _ = _two_pets()
+    odd = Task("Odd", "06:00", priority="urgent")
+    low = Task("Low", "07:00", priority="low")
+    mochi.add_task(odd)
+    mochi.add_task(low)
+
+    assert Scheduler(owner).sort_by_priority() == [low, odd]
+
+
+# --- Recurrence edge cases -----------------------------------------------
+
+def test_daily_recurrence_rolls_over_month_year_and_leap_day():
+    from datetime import date
+    cases = [
+        (date(2026, 12, 31), date(2027, 1, 1)),
+        (date(2026, 1, 31), date(2026, 2, 1)),
+        (date(2028, 2, 28), date(2028, 2, 29)),
+    ]
+    for due, expected in cases:
+        task = Task("Walk", "08:00", "daily", due_date=due)
+        assert task.next_occurrence().due_date == expected
+
+
+def test_next_occurrence_is_independent_copy():
+    original = Task("Walk", "08:00", "daily")
+    original.mark_complete()
+
+    nxt = original.next_occurrence()
+    nxt.description = "Changed"
+
+    assert original.completed and not nxt.completed
+    assert original.description == "Walk"
+
+
+def test_unknown_frequency_has_no_next_occurrence():
+    assert Task("Bath", "10:00", "monthly").next_occurrence() is None
+
+
+# --- Conflict detection --------------------------------------------------
+
+def test_completed_tasks_are_not_flagged_as_conflicts():
+    owner, mochi, rex = _two_pets()
+    done = Task("Walk", "08:00")
+    mochi.add_task(done)
+    rex.add_task(Task("Feed", "08:00"))
+    done.mark_complete()
+
+    assert Scheduler(owner).find_conflicts() == []

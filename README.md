@@ -55,36 +55,48 @@ Today's Schedule for Sam (90 min available)
 
 ## 🧪 Testing PawPal+
 
+Run the command from the project root:
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+**What the tests cover** (20 tests in `tests/test_pawpal.py`):
+
+- **Task and pet basics:** marking a task complete, and adding a task to a pet.
+- **Sorting:** tasks come back in chronological order across pets, equal times keep their original order, the original list is not mutated, an empty list works, and priority sorting puts high first (then time) with unknown priorities last.
+- **Recurring tasks:** completing a daily task creates a new one due the next day, weekly tasks are due 7 days later, one-off tasks do not repeat, and rollovers across month end, year end, and leap day are correct. The copy is independent, unknown frequencies are ignored, and future occurrences stay out of today's plan.
+- **Conflict detection:** duplicate start times are flagged for the same pet and for different pets, different times or days are not flagged, completed tasks are ignored, and `conflict_warning_for` returns a message instead of raising an error.
+
 
 ```
-# Paste your pytest output here
-tests/test_pawpal.py ..                                                                        [100%]
+============================= test session starts ==============================
+platform darwin -- Python 3.13.5, pytest-9.1.1, pluggy-1.7.0
+rootdir: /Users/Mahati/Desktop/ai110-module2show-pawpal-starter
+plugins: anyio-4.15.1
+collected 20 items
 
-========================================= 2 passed in 0.02s ==========================================
+tests/test_pawpal.py ....................                                [100%]
+
+============================== 20 passed in 0.03s ==============================
+```
+
+**Confidence level: ⭐⭐⭐⭐ (4/5)**
+
+All 20 tests pass, and they cover the main behaviors, including sorting, recurrence, and conflict detection. One star is held back because of the known gap that conflicts only match exact start times (durations that overlap are not detected). Also, completing the same recurring task twice creates a duplicate next occurrence.
 
 ## Implementation Summary
 I made pawpal_system.py have the four required classes: Task, Pet, Owner, and Scheduler, as the original design used five. The Task class stores care activity details and completion status, while Pet manages its own tasks. Owner holds multiple pets and provides their combined tasks through get_all_tasks(). Scheduler uses this method to select pending tasks by priority that fit within the owner’s available time, then displays them in time order. It also supports filtering and flags tasks with identical start times. I added a demo in main.py with two pets and five tasks and two tests in test_pawpal.py for marking a task complete and adding a task to a pet.
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Scheduler.sort_by_time()`, `Scheduler.sort_by_priority()` | Sorts by start time or priority (high, medium, low), with time used to break priority ties. |
+| Filtering | `Scheduler.filter_tasks()`, `Scheduler.build_daily_plan()` | Filters by pet or completion status. The daily plan considers pending tasks due today or earlier and skips tasks that exceed the remaining time budget. |
+| Conflict handling | `Scheduler.find_conflicts()`, `Scheduler.conflict_warnings()`, `Scheduler.conflict_warning_for()` | Detects matching start times and due dates and provides warnings without blocking tasks. Does not detect duration overlaps. |
+| Recurring tasks | `Task.next_occurrence()`, `Scheduler.complete_task()` | Completing a daily or weekly task adds an uncompleted copy due 1 or 7 days after its original due date. One-time tasks do not repeat. |
 
+## Testing PawPal+
 ## 📸 Demo Walkthrough
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
