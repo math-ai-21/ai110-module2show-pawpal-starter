@@ -83,34 +83,91 @@ if owner.pets:
     target_name = st.selectbox("Assign to", [p.name for p in owner.pets])
     if st.button("Add task"):
         target = next(p for p in owner.pets if p.name == target_name)
-        new_task = Task(
-            description=task_title,
-            time=task_time.strftime("%H:%M"),
-            duration_minutes=int(duration),
-            priority=priority,
+        time_str = task_time.strftime("%H:%M")
+        is_duplicate = any(
+            t.description == task_title and t.time == time_str and not t.completed
+            for t in target.tasks
         )
-        target.add_task(new_task)
-        warning = Scheduler(owner).conflict_warning_for(new_task)
-        if warning:
-            st.warning(warning)  # task is still saved; user just gets a heads-up
+        if is_duplicate:
+            st.warning(f"{target_name} already has '{task_title}' at {time_str}. Not added again.")
+        else:
+            new_task = Task(
+                description=task_title,
+                time=time_str,
+                duration_minutes=int(duration),
+                priority=priority,
+            )
+            target.add_task(new_task)
+            st.success(f"Added '{task_title}' for {target_name} at {time_str}.")
 
-all_tasks = owner.get_all_tasks()
-if all_tasks:
-    st.write("Current tasks:")
-    st.table(
-        [
-            {
-                "pet": t.pet_name,
-                "task": t.description,
-                "time": t.time,
-                "duration_minutes": t.duration_minutes,
-                "priority": t.priority,
-            }
-            for t in all_tasks
-        ]
-    )
-else:
+scheduler = Scheduler(owner)
+all_tasks = scheduler.get_all_tasks()
+
+
+def tasks_to_rows(tasks):
+    """Convert Task objects into display rows for st.table."""
+    return [
+        {
+            "Time": t.time,
+            "Pet": t.pet_name,
+            "Task": t.description,
+            "Duration (min)": t.duration_minutes,
+            "Priority": t.priority.capitalize(),
+            "Status": "Done" if t.completed else "Pending",
+        }
+        for t in tasks
+    ]
+
+
+def show_conflicts(scheduler):
+    """One warning per clashing time slot, instead of one per pair of tasks."""
+    slots = {}
+    for a, b in scheduler.find_conflicts():
+        slot = slots.setdefault((a.due_date, a.time), [])
+        for t in (a, b):
+            if not any(t is s for s in slot):
+                slot.append(t)
+    if not slots:
+        st.success("No scheduling conflicts.")
+        return
+    for (due, time), tasks in sorted(slots.items()):
+        names = ", ".join(f"{t.pet_name}: {t.description}" for t in tasks)
+        st.warning(f"{len(tasks)} tasks overlap at {time} on {due} - {names}")
+
+
+st.markdown("### Your tasks")
+if not all_tasks:
     st.info("No tasks yet. Add a pet, then add a task.")
+else:
+    show_conflicts(scheduler)
+
+    col_s, col_f, col_p = st.columns(3)
+    with col_s:
+        sort_choice = st.radio("Sort by", ["Time", "Priority"], horizontal=True)
+    with col_f:
+        status_choice = st.selectbox("Status", ["All", "Pending", "Completed"])
+    with col_p:
+        pet_choice = st.selectbox("Pet", ["All"] + [p.name for p in owner.pets])
+
+    filtered = scheduler.filter_tasks(
+        completed={"All": None, "Pending": False, "Completed": True}[status_choice],
+        pet_name=None if pet_choice == "All" else pet_choice,
+    )
+    ordered = (
+        scheduler.sort_by_time(filtered)
+        if sort_choice == "Time"
+        else scheduler.sort_by_priority(filtered)
+    )
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Showing", f"{len(ordered)} of {len(all_tasks)}")
+    m2.metric("Pending", len(scheduler.filter_tasks(completed=False)))
+    m3.metric("Completed", len(scheduler.filter_tasks(completed=True)))
+
+    if ordered:
+        st.table(tasks_to_rows(ordered))
+    else:
+        st.info("No tasks match the current filters.")
 
 st.divider()
 
@@ -124,12 +181,22 @@ owner.available_minutes = int(
 
 if st.button("Generate schedule"):
     scheduler = Scheduler(owner)
-    plan_lines = scheduler.explain_plan()
-    if not plan_lines:
+    plan = scheduler.build_daily_plan()
+    if not plan:
         st.info("Nothing to schedule. Add a pet and some pending tasks first.")
     else:
-        st.success("Today's plan")
-        for line in plan_lines:
-            st.write("- " + line)
-        for warning in scheduler.conflict_warnings():
-            st.warning(warning)
+        used = sum(t.duration_minutes for t in plan)
+        st.success(
+            f"Today's plan: {len(plan)} task(s), {used} of "
+            f"{owner.available_minutes} minutes used."
+        )
+        st.table(tasks_to_rows(plan))  # already sorted by time
+        skipped = [
+            t for t in scheduler.sort_by_priority(scheduler.filter_tasks(completed=False))
+            if t not in plan
+        ]
+        if skipped:
+            st.warning(
+                "Not scheduled (over the time budget or not due yet): "
+                + ", ".join(f"{t.pet_name}'s {t.description}" for t in skipped)
+            )

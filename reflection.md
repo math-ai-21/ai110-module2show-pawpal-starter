@@ -5,7 +5,7 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
-My intial UML design is to focus on organizing the pet care system into seperate classes where they each have a clear responsibility. 
+My initial UML design is to focus on organizing the pet care system into seperate classes where they each have a clear responsibility. 
 - What classes did you include, and what responsibilities did you assign to each?
 I would include these classes:
    - Pet: Stores information about the pet, such as its name, species, and age.
@@ -18,7 +18,8 @@ I would include these classes:
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
-Yes, my design changed during implementation. Based on the AI feedback, I added pet and date attributes to the DailyPlan class. The original design stored the tasks but did not specify which pet they were for or which day they should be completed. This change makes that information clear for each unique daily plan.
+    - Yes, my design changed during implementation. Based on the AI feedback, I added pet and date attributes to the DailyPlan class. The original design stored the tasks but did not specify which pet they were for or which day they should be completed. This change makes that information clear for each unique daily plan.
+    Note: Later in implementation, the design changed further: CareTask, OwnerPreferences, DailyPlan and Planner became Task, Owner and Scheduler. Owner holds multiple pets, so the scheduler can work across all of them, and a separate per-pet plan object was no longer needed.
 
 ---
 
@@ -62,12 +63,16 @@ Yes, my design changed during implementation. Based on the AI feedback, I added 
 
 - What behaviors did you test?
 - Why were these tests important?
+The main areas I tested are basic functionality, sorting, recurrence, and conflict detection. I checked task completion and addition; chronological sorting, equal-time order, unchanged original lists, and empty lists; and priority sorting with time-based ties and unknown priorities last. I checked independent daily/weekly recurrences across month, year, and leap-day boundaries, no recurrence for one-off/unknown frequencies, and future tasks excluded from today’s plan. I also checked same-time/date conflicts within and across pets, excluding different times/dates and completed tasks, with warnings instead of errors. These tests were importnat because testing the edge cases (empty lists, equal times, date rollovers) meant I could change the code and know right away if something broke. I also wanted conflict handling to warn but not crash or remove a task.
 
 **b. Confidence**
 
 - How confident are you that your scheduler works correctly?
+    - I'm fairly confident in the Scheduler logic, because all 20 tests pass and main.py produces the schedule I expected. 
 - What edge cases would you test next if you had more time?
-
+    Two edge cases I would test next time if I had more time are: 
+    - Considering conflicts only compare exact start times, so tasks whose durations overlap (a 30-minute walk at 08:00 and a nap at 08:15) aren't detected.
+    - Also, considering that completing the same recurring task twice creates a duplicate next occurrence.
 ---
 
 ## 5. Reflection
@@ -75,11 +80,14 @@ Yes, my design changed during implementation. Based on the AI feedback, I added 
 **a. What went well**
 
 - What part of this project are you most satisfied with?
+    - I am most satisfied with the functioning final tool that I built with the help of AI. Also, implementing the sorting, filtering, and conflict-warning logic really made me think about how the tool’s functionality should work.
 
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?
+    - If I had another iteration, I would add more features to make the tool more distinctive. For instance, I would consider adding an AI companion to guide users through the tool, help them add pet-care tasks, and explain their daily plan.
 
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+    - One important thing I learned about designing systems is the importance of iteration, as I had to rethink my UML design, methods, and UI to build a useful pet-care tool. I also learned how to evaluate AI-generated code and decide which suggested changes to accept or reject.

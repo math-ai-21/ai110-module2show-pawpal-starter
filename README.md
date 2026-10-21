@@ -44,14 +44,20 @@ pip install -r requirements.txt
 
 ## 🖥️ Sample Output
 
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
+Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like (from `python main.py`):
 
+```text
 Today's Schedule for Sam (90 min available)
 ============================================================
 08:00 - Biscuit: Morning walk (30 min, high priority)
+08:00 - Mia: Playtime (15 min, medium priority)
 08:30 - Mia: Breakfast (10 min, high priority)
 12:00 - Mia: Give medication (5 min, high priority)
 18:00 - Biscuit: Evening walk (30 min, medium priority)
+
+Conflicts:
+  WARNING: Conflict at 08:00 on 2026-10-20 (different pets): Biscuit's 'Morning walk' and Mia's 'Playtime'
+```
 
 ## 🧪 Testing PawPal+
 
@@ -69,15 +75,9 @@ python -m pytest
 
 
 ```
-============================= test session starts ==============================
-platform darwin -- Python 3.13.5, pytest-9.1.1, pluggy-1.7.0
-rootdir: /Users/Mahati/Desktop/ai110-module2show-pawpal-starter
-plugins: anyio-4.15.1
-collected 20 items
+tests/test_pawpal.py ....................                                                                      [100%]
 
-tests/test_pawpal.py ....................                                [100%]
-
-============================== 20 passed in 0.03s ==============================
+================================================= 20 passed in 0.04s ================================================
 ```
 
 **Confidence level: ⭐⭐⭐⭐ (4/5)**
@@ -85,7 +85,15 @@ tests/test_pawpal.py ....................                                [100%]
 All 20 tests pass, and they cover the main behaviors, including sorting, recurrence, and conflict detection. One star is held back because of the known gap that conflicts only match exact start times (durations that overlap are not detected). Also, completing the same recurring task twice creates a duplicate next occurrence.
 
 ## Implementation Summary
-I made pawpal_system.py have the four required classes: Task, Pet, Owner, and Scheduler, as the original design used five. The Task class stores care activity details and completion status, while Pet manages its own tasks. Owner holds multiple pets and provides their combined tasks through get_all_tasks(). Scheduler uses this method to select pending tasks by priority that fit within the owner’s available time, then displays them in time order. It also supports filtering and flags tasks with identical start times. I added a demo in main.py with two pets and five tasks and two tests in test_pawpal.py for marking a task complete and adding a task to a pet.
+I made pawpal_system.py have the four required classes: Task, Pet, Owner, and Scheduler, as the original design used five. The Task class stores care activity details and completion status, while Pet manages its own tasks. Owner holds multiple pets and provides their combined tasks through get_all_tasks(). Scheduler uses this method to select pending tasks by priority that fit within the owner’s available time, then displays them in time order. It also supports filtering and flags tasks with identical start times. I added a demo in main.py and tests in test_pawpal.py for marking a task complete and adding a task to a pet.
+
+## ✨ Features
+
+- **Sorting:** by time ("HH:MM", earliest first) or by priority (high, medium, low, ties by time).
+- **Filtering:** by completion status and/or pet.
+- **Conflict warnings:** flags pending tasks with the same date and start time. It only warns and never blocks a task.
+- **Daily/weekly recurrence:** completing a recurring task adds the next copy, due 1 or 7 days after the original due date.
+- **Daily plan:** greedily picks pending tasks due today or earlier by priority until `available_minutes` runs out, shown in time order with a one-line explanation per task.
 
 ## 📐 Smarter Scheduling
 
@@ -101,10 +109,11 @@ I made pawpal_system.py have the four required classes: Task, Pet, Owner, and Sc
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. Enter the owner's name, then add a pet (for example, Mochi which is a dog).
+2. Add a task: "Morning walk" at 08:00, 30 minutes, high priority, assigned to Mochi.
+3. Add a second task for Mochi also at 08:00, such as "Feed", low priority, and a warning appears saying two tasks overlap at 08:00. Both tasks are still saved.
+4. Switch the Sort by option between Time and Priority, or filter to Pending tasks, to see the table reorder.
+5. Set the available minutes and click Generate schedule. The plan appears as a table in time order, with a success banner showing the minutes used. Also, any pending tasks left out (over budget or not due yet) are listed in a warning.
+
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
